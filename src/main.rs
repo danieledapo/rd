@@ -5,57 +5,57 @@ use std::path::{Path, PathBuf};
 use std::process::{Command, Stdio};
 use std::time::Instant;
 
+use clap::Parser;
 use rand::prelude::*;
-use structopt::StructOpt;
 
 use rd::System;
 
 /// Program to generate images and even videos showing
 /// what Reaction Diffusion is all about.
-#[derive(Debug, StructOpt)]
+#[derive(Debug, Parser)]
 struct Opts {
     /// Width of the final image/video.
-    #[structopt(short, long, default_value = "512")]
+    #[clap(short, long, default_value = "512")]
     width: u16,
 
     /// Height of the final image/video.
-    #[structopt(short, long, default_value = "512")]
+    #[clap(short, long, default_value = "512")]
     height: u16,
 
     /// How many iterations of the simulation to run.
     ///
     /// A big number is suggested when the initial seed is small enough.
-    #[structopt(short, long, default_value = "300")]
+    #[clap(short, long, default_value = "300")]
     iterations: usize,
 
     /// The rate chemical A is poured into the system.
-    #[structopt(short, long, default_value = "0.055")]
+    #[clap(short, long, default_value = "0.055")]
     feed_rate: f32,
 
     /// The rate chemical B is killed from the system.
-    #[structopt(short, long, default_value = "0.062")]
+    #[clap(short, long, default_value = "0.062")]
     kill_rate: f32,
 
     /// How much to speedup the image saving and the video.
-    #[structopt(short, long, default_value = "1")]
+    #[clap(short, long, default_value = "1")]
     speed: usize,
 
     /// Whether to disable creating the video using ffmpeg or not.
     ///
     /// It's turned off by default if ffmpeg is not found.
-    #[structopt(long)]
+    #[clap(long)]
     without_video: bool,
 
     /// Where to store the temporary frames used to create the video.
-    #[structopt(long, parse(from_os_str), default_value = "img")]
+    #[clap(long, parse(from_os_str), default_value = "img")]
     img_dir: PathBuf,
 
     /// The seed to use to start the generation.
-    #[structopt(subcommand)]
+    #[clap(subcommand)]
     seed: Option<Seed>,
 }
 
-#[derive(Debug, StructOpt)]
+#[derive(Debug, Parser)]
 enum Seed {
     /// The process is seeded with a centered rectangle.
     /// Used mostly as an example.
@@ -67,7 +67,7 @@ enum Seed {
     /// The process is seeded with the given image that is automatically
     /// converted to grayscale.
     Image {
-        #[structopt(parse(from_os_str))]
+        #[clap(parse(from_os_str))]
         input: PathBuf,
     },
 }
@@ -161,7 +161,7 @@ fn create_system(opts: &Opts) -> System {
                     opts.height.into(),
                     image::imageops::FilterType::Gaussian,
                 )
-                .into_luma();
+                .into_luma8();
 
             for (x, y, p) in im.enumerate_pixels() {
                 let g = p.0[0];
@@ -218,12 +218,12 @@ impl Renderer {
 
         if self.with_video && gen % self.speed == 0 {
             let path = self.img_dir.join(&format!("rd-{}.png", gen / self.speed));
-            self.render_frame(&system, &path);
+            self.render_frame(system, &path);
         }
     }
 
     fn end(&mut self, system: &System) {
-        self.render_frame(&system, Path::new("rd.png"));
+        self.render_frame(system, Path::new("rd.png"));
 
         if self.with_video {
             self.build_video();
