@@ -1,9 +1,11 @@
-use std::convert::TryFrom;
-use std::fs;
-use std::io::Write;
-use std::path::{Path, PathBuf};
-use std::process::{Command, Stdio};
-use std::time::Instant;
+use std::{
+    convert::TryFrom,
+    fs,
+    io::Write,
+    path::{Path, PathBuf},
+    process::{Command, Stdio},
+    time::Instant,
+};
 
 use clap::Parser;
 use rand::prelude::*;
@@ -15,43 +17,43 @@ use rd::System;
 #[derive(Debug, Parser)]
 struct Opts {
     /// Width of the final image/video.
-    #[clap(short, long, default_value = "512")]
+    #[arg(long, default_value = "512")]
     width: u16,
 
     /// Height of the final image/video.
-    #[clap(short, long, default_value = "512")]
+    #[arg(long, default_value = "512")]
     height: u16,
 
     /// How many iterations of the simulation to run.
     ///
     /// A big number is suggested when the initial seed is small enough.
-    #[clap(short, long, default_value = "300")]
+    #[arg(short, long, default_value = "300")]
     iterations: usize,
 
     /// The rate chemical A is poured into the system.
-    #[clap(short, long, default_value = "0.055")]
+    #[arg(short, long, default_value = "0.055")]
     feed_rate: f32,
 
     /// The rate chemical B is killed from the system.
-    #[clap(short, long, default_value = "0.062")]
+    #[arg(short, long, default_value = "0.062")]
     kill_rate: f32,
 
     /// How much to speedup the image saving and the video.
-    #[clap(short, long, default_value = "1")]
+    #[arg(short, long, default_value = "1")]
     speed: usize,
 
     /// Whether to disable creating the video using ffmpeg or not.
     ///
     /// It's turned off by default if ffmpeg is not found.
-    #[clap(long)]
+    #[arg(long)]
     without_video: bool,
 
     /// Where to store the temporary frames used to create the video.
-    #[clap(long, parse(from_os_str), default_value = "img")]
+    #[arg(long, default_value = "img")]
     img_dir: PathBuf,
 
     /// The seed to use to start the generation.
-    #[clap(subcommand)]
+    #[command(subcommand)]
     seed: Option<Seed>,
 }
 
@@ -66,10 +68,7 @@ enum Seed {
 
     /// The process is seeded with the given image that is automatically
     /// converted to grayscale.
-    Image {
-        #[clap(parse(from_os_str))]
-        input: PathBuf,
-    },
+    Image { input: PathBuf },
 }
 
 struct Renderer {
@@ -80,7 +79,7 @@ struct Renderer {
 }
 
 fn main() {
-    let opts = Opts::from_args();
+    let opts = Opts::parse();
 
     setup_img_dir(&opts);
 
